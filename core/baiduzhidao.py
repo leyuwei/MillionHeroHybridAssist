@@ -43,7 +43,8 @@ def baidu_count(keyword, answers, timeout=1.8):
     dr = re.compile(r'<[^>]+>', re.S)
     resptext = dr.sub('', resp.text)
     resptext = re.sub("[\s+\.\!\/_,《》√✔×✘↘→↗↑↖←↙↓\“\”·$%^*(+\’\‘\']+|[+——！，。？、~@#￥%……&*（）]+", "", resptext)
-    resptext.replace(' ', '')
+    resptext = resptext.replace(' ', '')
+    resptext = resptext.lower()
     summary = {
         ans: resptext.count(ans)
         for ans in answers

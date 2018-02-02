@@ -44,8 +44,8 @@ def bing_count(keyword, answers, timeout=2):
     dr = re.compile(r'<[^>]+>', re.S)
     resptext = dr.sub('', resp.text)
     resptext = re.sub("[\s+\.\!\/_,《》√✔×✘↘→↗↑↖←↙↓\“\”·$%^*(+\’\‘\']+|[+——！，。？、~@#￥%……&*（）]+", "", resptext)
-    resptext.replace(' ','')
-    # print(resptext)
+    resptext = resptext.replace(' ','')
+    resptext = resptext.lower()
     summary = {
         ans: resptext.count(ans)
         for ans in answers
