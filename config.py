@@ -18,8 +18,8 @@ crop_areas = {
 }
 
 ### baidu orc
-app_id = "10686632"
-app_key = "KgQjLQPBVTAsBHd12VraG8wO"
+app_id = "10686932"
+app_key = "KgQjLQPBVTAsBHd62VraG8wO"
 app_secret = "GAnOzFSHpV2583bx4pfZGFkIGGSRGniM"
 
 ### ocr.space
