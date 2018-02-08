@@ -32,7 +32,7 @@ def bing_count(keyword, answers, timeout=2):
     params = {
         "q": keyword.encode("utf-8")
     }
-    resp = requests.get("https://cn.bing.com/knows/search", params=params, headers=headers, timeout=timeout)
+    resp = requests.get("https://www.bing.com/knows/search", params=params, headers=headers, timeout=timeout)
 
     if not resp.ok:
         print("Bing搜索出错或超时")

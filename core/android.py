@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-
     use adb to capture the phone screen
     then use hanwang text recognize the text
     then use baidu to search answer
-
 """
 
 from datetime import datetime
@@ -16,9 +14,7 @@ from shutil import copyfile
 
 def analyze_current_screen_text(crop_area, directory=".", compress_level=1):
     """
-    capture the android screen now
-
-    :return:
+        capture the android screen now
     """
     print("截屏时间: ", datetime.now().strftime("%H:%M:%S"))
     screenshot_filename = "screenshot.png"
