@@ -9,6 +9,7 @@ import operator
 import re
 import random
 import requests
+from config import reg
 
 Agents = (
     "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0",
@@ -16,7 +17,7 @@ Agents = (
 )
 
 
-def bing_count(keyword, answers, timeout=2):
+def bing_count(keyword, answers, delword='', timeout=2):
     """
     Count the answer number from first page of bing search
 
@@ -34,6 +35,8 @@ def bing_count(keyword, answers, timeout=2):
     }
     resp = requests.get("https://www.bing.com/knows/search", params=params, headers=headers, timeout=timeout)
 
+    newanswers = [ans.replace(delword, "") for ans in answers]
+
     if not resp.ok:
         print("Bing搜索出错或超时")
         return {
@@ -43,12 +46,12 @@ def bing_count(keyword, answers, timeout=2):
 
     dr = re.compile(r'<[^>]+>', re.S)
     resptext = dr.sub('', resp.text)
-    resptext = re.sub("[\s+\.\!\/_,《》√✔×✘↘→↗↑↖←↙↓\“\”·$%^*(+\’\‘\']+|[+——！，。？、~@#￥%……&*（）]+", "", resptext)
+    resptext = re.sub(reg, "", resptext)
     resptext = resptext.replace(' ','')
     resptext = resptext.lower()
     summary = {
-        ans: resptext.count(ans)
-        for ans in answers
+        ans: resptext.count(ans2)
+        for (ans, ans2) in zip(answers, newanswers)
     }
     
     if all([cnt == 0 for cnt in summary.values()]):
@@ -57,8 +60,8 @@ def bing_count(keyword, answers, timeout=2):
     default = list(summary.values())[0]
     if all([value == default for value in summary.values()]):
         answer_firsts = {
-            ans: resptext.index(ans)
-            for ans in answers
+            ans: resptext.count(ans2)
+            for (ans, ans2) in zip(answers, newanswers)
         }
         sorted_li = sorted(answer_firsts.items(), key=operator.itemgetter(1), reverse=False)
         answer_li, index_li = zip(*sorted_li)

@@ -18,9 +18,9 @@ crop_areas = {
 }
 
 ### baidu orc
-app_id = "13486232"
-app_key = "KgdmLQVTVTAsBHd12VRaG8wO"
-app_secret = "GAnOzrPSpV2573qx4pfZGFkIIGPRG5iM"
+app_id = "10698232"
+app_key = "KgQjLQVBVT1RTWSd12VraG8wO"
+app_secret = "GAnOzFPHpV2573b789fZGFkIGGSRGniM"
 
 ### ocr.space
 api_key = "6c851da45688957"
@@ -31,3 +31,6 @@ prefer = ("baidu",  "ocrspace")
 
 ### enable chrome
 enable_chrome = True
+
+### Regex Pattern
+reg = "[\s+\.\!\/_,《》√✔×✘↘→↗↑↖←↙↓\“\”·$%^*(+\’\‘\']+|[+——！，。？、~@#￥%……&*（）]+|-"

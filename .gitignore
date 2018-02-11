@@ -1,0 +1,7 @@
+.idea
+*.pyc
+__pycache__
+core/__pycache__
+screenshots
+.vscode
+.DS_Store

@@ -1,11 +1,7 @@
-baidu-aip==2.0.0.1
-certifi==2017.11.5
-chardet==3.0.4
-idna==2.6
-keyboard==0.11.0
-Pillow==5.0.0
-requests==2.18.4
 selenium==3.8.1
+baidu_aip==2.0.0.1
 terminaltables==3.1.0
-urllib3==1.22
-pypiwin32==220
+requests==2.18.4
+Pillow==5.0.0
+aip==1.0.0.5
+win32gui==221.6
