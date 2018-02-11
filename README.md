@@ -2,22 +2,23 @@
 百万英雄、冲顶大会 辅助作答器 使用三引擎混合搜索 准确率超高 慎用、侵删！
 2018/02/11 已更新
 ====
-### 十分感谢`smileboywtu`原作者提供的源代码思路 
-* 原Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link><br>
+### 致谢
+* 思路来源：作者`smileboywtu` Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link><br><br>
 
 ### 工具介绍 <br>
 本Repo根据其源代码进行了修改和汉化 支持三引擎搜索模式 准确率大幅上升<br>
 新增相似度搜寻算法，优化结果表现！<br>
 使用时，请按照原作者`smileboywtu`的Repo说明进行配置，在此不再赘述。<br>
-本Repo只是提升了相关性能，汉化加强并集成了ADB，大体框架仍然保持不变！<br>
+本Repo只是提升了相关性能，汉化加强并集成了ADB，大体框架仍然保持不变！<br><br>
 
+### 免责声明 <br>
 <b>代码仅供技术交流使用，切勿用于任何其它用途！用于任何盈利用途后果自负！</b><br>
 如有对西瓜视频、冲顶大会等相关利益方的侵权，请联系我立即删除。在此致以诚挚感谢！<br><br>
 
 ### 使用前须知 <br>
 * 您在使用时，需要更换config.py中的baiduOCR等秘钥参数（现在的是没法使用的，需要您自行到百度开发者中心去申请OCR的秘钥并替换<link>https://cloud.baidu.com/</link>，具体操作办法百度一下都有）。否则无法使用！<br>
 * 您必须在电脑中安装 Python3.5 或以上版本的环境<br>
-* 同时为了您能够使用正常，请在使用前以管理员模式运行runfirst.bat批处理以初始化运行环境<br><br>
+* 同时为了您能够使用正常，请在使用前以~~管理员模式~~正常模式运行runfirst.bat批处理以初始化运行环境<br><br>
 
 ### ====  已更新 2018/02/11  ====<br>
 * 1、图像预增强以提升识别准确率
