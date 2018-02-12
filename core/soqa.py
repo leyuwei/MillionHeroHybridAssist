@@ -2,7 +2,7 @@
 
 """
 
-    Zhihu searcher
+    SO searcher
 
 """
 import operator
@@ -18,7 +18,7 @@ Agents = (
 )
 
 
-def zhihu_count(keyword, answers, delword='', timeout=2):
+def so_count(keyword, answers, delword='', timeout=2):
     """
     Count the answer number from first page of baidu search
 
@@ -27,20 +27,19 @@ def zhihu_count(keyword, answers, delword='', timeout=2):
     :return:
     """
     headers = {
-        # "Cache-Control": "no-cache",
-        "Host": "www.zhihu.com",
+        "Host": "www.so.com",
         "User-Agent": random.choice(Agents)
     }
     params = {
         "q": keyword.encode("utf-8"),
-        "type": "content".encode("utf-8")
+        "ie": "utf-8".encode("utf-8")
     }
-    resp = requests.get("https://www.zhihu.com/search", params=params, headers=headers, timeout=timeout)
+    resp = requests.get("https://www.so.com/s", params=params, headers=headers, timeout=timeout)
 
     newanswers = [ans.replace(delword, "") for ans in answers]
 
     if not resp.ok:
-        print("知乎搜索出错或超时")
+        print("360搜索出错或超时")
         return {
             ans: 0
             for ans in answers

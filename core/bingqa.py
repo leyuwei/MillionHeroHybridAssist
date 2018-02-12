@@ -48,6 +48,7 @@ def bing_count(keyword, answers, delword='', timeout=2):
     resptext = dr.sub('', resp.text)
     resptext = re.sub(reg, "", resptext)
     resptext = resptext.replace(' ','')
+    resptext = resptext.replace(delword, "")
     resptext = resptext.lower()
     summary = {
         ans: resptext.count(ans2)
