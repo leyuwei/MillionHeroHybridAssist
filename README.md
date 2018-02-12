@@ -12,7 +12,7 @@
 新增相似度搜寻算法，优化结果表现！<br>
 ![V3.6版本运行截图](https://github.com/leyuwei/MillionHeroHybridAssist/blob/master/demoV4.JPG)<br>
 使用时，请按照原作者`smileboywtu`的Repo说明进行配置，在此不再赘述。<br>
-本Repo只是提升了相关性能，汉化加强并集成了ADB，大体框架仍然保持不变！<br><br>
+本Repo大幅提升了相关性能，汉化加强并集成了ADB<br><br>
 
 ### 免责声明
 <b>代码仅供技术交流使用，切勿用于任何其它用途！用于任何盈利用途后果自负！</b><br>
