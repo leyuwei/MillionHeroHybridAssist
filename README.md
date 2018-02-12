@@ -10,7 +10,7 @@
 ### 工具介绍
 本Repo根据其源代码进行了修改和汉化 支持四引擎搜索模式 准确率大幅上升<br>
 新增相似度搜寻算法，优化结果表现！<br>
-![V3.6版本运行截图](https://github.com/leyuwei/MillionHeroHybridAssist/blob/master/demo.JPG)<br>
+![V3.6版本运行截图](https://github.com/leyuwei/MillionHeroHybridAssist/blob/master/demoV4.JPG)<br>
 使用时，请按照原作者`smileboywtu`的Repo说明进行配置，在此不再赘述。<br>
 本Repo只是提升了相关性能，汉化加强并集成了ADB，大体框架仍然保持不变！<br><br>
 
