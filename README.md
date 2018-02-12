@@ -5,7 +5,7 @@
 * 思路来源：作者`smileboywtu` Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link><br><br>
 
 ### 最新战绩
-* 2018/02/12 21:00场 全部题目均以高解析百分比通过且正确<br><br>
+* 2018/02/12 20:00场 全部题目均以高解析百分比通过且正确<br><br>
 
 ### 工具介绍
 本Repo根据其源代码进行了修改和汉化 支持四引擎搜索模式 准确率大幅上升<br>
