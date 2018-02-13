@@ -1,5 +1,5 @@
 # MillionHeroHybridAssist V4.5
-百万英雄、冲顶大会 辅助作答器 使用四引擎混合搜索 准确率超高 慎用、侵删！ 2018/02/13 已更新
+百万英雄、冲顶大会 辅助作答器 使用四引擎三算法混合搜索 准确率超高 慎用、侵删！ 2018/02/13 已更新
 ====
 ### 致谢
 * 思路来源：作者`smileboywtu` Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link> 已于原作者代码有很大不同<br><br>
