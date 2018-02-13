@@ -40,8 +40,9 @@ from core.Slicer import *
 from core.ios import analyze_current_screen_text_ios
 from core.baiduzhidao import baidu_count
 from core.baiduzhidao import zhidao_tree
+from core.baiduzhidao import baidu_qmi_count
 from core.bingqa import bing_count
-from core.zhihuqa import zhihu_count
+from core.zhidaoqa import zhidao_count
 from core.soqa import so_count
 from core.check_words import parse_false
 from core.airplayscr import check_exsit
@@ -141,10 +142,12 @@ class SearchThread(Thread):
     def run(self):
         if self.engine == 'baidu':
             self.result = baidu_count(self.question,self.answer,delword=self.delword,timeout=self.timeout,numofquery=self.numofquery)
+        elif self.engine == 'baiduqmi':
+            self.result = baidu_qmi_count(self.question, self.answer, delword=self.delword, timeout=self.timeout,numofquery=self.numofquery)
         elif self.engine == 'bing':
             self.result = bing_count(self.question,self.answer,delword=self.delword,timeout=self.timeout)
-        elif self.engine == 'zhihu':
-            self.result = zhihu_count(self.question, self.answer,delword=self.delword, timeout=self.timeout)
+        elif self.engine == 'zhidao':
+            self.result = zhidao_count(self.question, self.answer,delword=self.delword, timeout=self.timeout)
         elif self.engine == 'so':
             self.result = so_count(self.question, self.answer,delword=self.delword, timeout=self.timeout)
         elif self.engine == 'zhidaotree':
@@ -166,6 +169,18 @@ def speak(word):
     thds.setDaemon(True)
     thds.start()
 
+def var(num):
+    n = len(num)
+    avg = 0
+    v = 0
+    for x in num:
+        avg += x
+    avg /= n
+    for x in num:
+       v += (avg - x) * (avg - x)
+    v = pow(v,0.5)
+    return v/(avg+1)
+
 def main():
     args = parse_args()
     timeout = args.timeout
@@ -174,7 +189,7 @@ def main():
     print(""" 
     请先选择您是否需要开启Chrome浏览器辅助
     它可以帮助您展示更多信息，但是也会降低结果匹配效率
-    输入 1 开启，输入 2 不开启，输入其它默认不开启。
+    输入  1-开启    2-不开启
     """)
     chrome_sw = input("请输入数字: ")
     if chrome_sw == "1":
@@ -253,14 +268,22 @@ def main():
         search_question_3 = search_question + " " + answers[2].replace(delword,"")
         thd1 = SearchThread(search_question, answers, timeout, delword, 'baidu')
         thd2 = SearchThread(search_question, answers, timeout, delword, 'bing')
-        thd3 = SearchThread(search_question, answers, timeout, delword, 'zhihu')
+        thd3 = SearchThread(search_question, answers, timeout, delword, 'zhidao')
         thd7 = SearchThread(search_question, answers, timeout, delword, 'so')
         if isNewAlgUsable:
             thd4 = SearchThread(search_question_1, answers, timeout, delword, 'baidu', numofquery=10)
             thd5 = SearchThread(search_question_2, answers, timeout, delword, 'baidu', numofquery=10)
             thd6 = SearchThread(search_question_3, answers, timeout, delword, 'baidu', numofquery=10)
+            # QMI算法7线程
+            thd_QA1 = SearchThread(search_question_1, answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_QA2 = SearchThread(search_question_2, answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_QA3 = SearchThread(search_question_3, answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_A1 = SearchThread(answers[0], answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_A2 = SearchThread(answers[1], answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_A3 = SearchThread(answers[2], answers, timeout, delword, 'baiduqmi', numofquery=5)
+            thd_Q = SearchThread(search_question, answers, timeout, delword, 'baiduqmi', numofquery=5)
 
-        # 创立3并发线程
+        # 创立并发线程
         if __name__ == '__main__':
             thd1.setDaemon(True)
             thd1.start()
@@ -277,6 +300,20 @@ def main():
                 thd5.start()
                 thd6.setDaemon(True)
                 thd6.start()
+                thd_QA1.setDaemon(True)
+                thd_QA1.start()
+                thd_QA2.setDaemon(True)
+                thd_QA2.start()
+                thd_QA3.setDaemon(True)
+                thd_QA3.start()
+                thd_A1.setDaemon(True)
+                thd_A1.start()
+                thd_A2.setDaemon(True)
+                thd_A2.start()
+                thd_A3.setDaemon(True)
+                thd_A3.start()
+                thd_Q.setDaemon(True)
+                thd_Q.start()
             # 顺序开启3线程
             thd1.join()
             thd2.join()
@@ -286,7 +323,14 @@ def main():
                 thd4.join()
                 thd5.join()
                 thd6.join()
-            # 等待3线程执行结束
+                thd_QA1.join()
+                thd_QA2.join()
+                thd_QA3.join()
+                thd_A1.join()
+                thd_A2.join()
+                thd_A3.join()
+                thd_Q.join()
+            # 等待线程执行结束
         summary = thd1.get_result()
         summary2 = thd2.get_result()
         summary3 = thd3.get_result()
@@ -295,6 +339,13 @@ def main():
             summary4 = thd4.get_result()
             summary5 = thd5.get_result()
             summary6 = thd6.get_result()
+            num_QA1 = thd_QA1.get_result()
+            num_QA2 = thd_QA2.get_result()
+            num_QA3 = thd_QA3.get_result()
+            num_A1 = thd_A1.get_result()
+            num_A2 = thd_A2.get_result()
+            num_A3 = thd_A3.get_result()
+            num_Q = thd_Q.get_result()
         # 获取线程执行结果
 
         # 下面开始合并结果并添加可靠性标志
@@ -303,27 +354,42 @@ def main():
         summary_t = summary
         for i in range(0,len(summary)):
             summary_t[answers[i]] += summary2[answers[i]]
-            #summary_t[answers[i]] += summary3[answers[i]]
             summary_t[answers[i]] += summary7[answers[i]]
+            summary_t[answers[i]] += summary3[answers[i]]
             credit += summary_t[answers[i]]
-        if credit < 2:
+        va = summary_t.values()
+        if credit < 2 or var(summary_t.values()) < 0.71:
             creditFlag = False
         if isNegativeQuestion == False:
             summary_li = sorted(summary_t.items(), key=operator.itemgetter(1), reverse=True)
         else:
             summary_li = sorted(summary_t.items(), key=operator.itemgetter(1), reverse=False)
 
+        summary_newalg = dict()
         if isNewAlgUsable:
-            summary_newalg = dict()
-            a = ((summary_t[orig_answer[0]]) + (summary4[orig_answer[0]]+0.1)) * ((summary5[orig_answer[0]] + summary6[orig_answer[0]])+0.1)
-            b = ((summary_t[orig_answer[1]]) + (summary5[orig_answer[1]]+0.1)) * ((summary4[orig_answer[1]] + summary6[orig_answer[1]])+0.1)
-            c = ((summary_t[orig_answer[2]]) + (summary6[orig_answer[2]]+0.1)) * ((summary4[orig_answer[2]] + summary5[orig_answer[2]])+0.1)
-            a = "%.2f" % a
-            b = "%.2f" % b
-            c = "%.2f" % c
-            summary_newalg.update({orig_answer[0]: float(a)})
-            summary_newalg.update({orig_answer[1]: float(b)})
-            summary_newalg.update({orig_answer[2]: float(c)})
+            # 先算一下QMI指数
+            A1_qmi = (num_QA1) / (num_Q * num_A1)
+            A2_qmi = (num_QA2) / (num_Q * num_A2)
+            A3_qmi = (num_QA3) / (num_Q * num_A3)
+            qmi_max = max(A1_qmi,A2_qmi,A3_qmi)
+            #print(A1_qmi,A2_qmi,A3_qmi)
+            # * (summary4[orig_answer[0]] )
+            a = (summary_t[orig_answer[0]]*10+1) * ((summary5[orig_answer[0]] + summary6[orig_answer[0]]) +1 )
+            b = (summary_t[orig_answer[1]]*10+1) * ((summary4[orig_answer[1]] + summary6[orig_answer[1]]) +1 )
+            c = (summary_t[orig_answer[2]]*10+1) * ((summary4[orig_answer[2]] + summary5[orig_answer[2]]) +1 )
+            similar_max = max(a, b, c)
+            # 以下判断没有严格的理论基础，暂时不开启
+            if isNegativeQuestion and creditFlag==False and False:
+                a = similar_max - a + 1
+                b = similar_max - b + 1
+                c = similar_max - c + 1
+            #print(a,b,c)
+            a = float("%.6f" % ((a/(similar_max))*(A1_qmi/(qmi_max))))
+            b = float("%.6f" % ((b/(similar_max))*(A2_qmi/(qmi_max))))
+            c = float("%.6f" % ((c/(similar_max))*(A3_qmi/(qmi_max))))
+            summary_newalg.update({orig_answer[0]: (a)})
+            summary_newalg.update({orig_answer[1]: (b)})
+            summary_newalg.update({orig_answer[2]: (c)})
 
         data = [("选项", "权重", "相似度")]
         topscore = 0
@@ -332,9 +398,15 @@ def main():
                 topscore = w
         for ans, w in summary_li:
             if isNegativeQuestion==False:
-                data.append((ans, w, summary_newalg[ans]))
+                if isNewAlgUsable: # 修正V4的BUG：可能导致不能继续识别的问题
+                    data.append((ans, w, summary_newalg[ans]))
+                else:
+                    data.append((ans, w, '0'))
             else:
-                data.append((ans, topscore-w, summary_newalg[ans]))
+                if isNewAlgUsable:
+                    data.append((ans, topscore-w+1, summary_newalg[ans]))
+                else:
+                    data.append((ans, topscore - w + 1, '0'))
         table = AsciiTable(data)
         print(table.table)
         print("")
@@ -394,11 +466,8 @@ def main():
 
     print("""
     原作者：GitHub/smileboywtu forked since 2018.01.10
-    Branch版本：V4.0    Branch作者：GitHub/leyuwei
-    Branch改进： 修正提问问题的判断，新增语音播报！
-                修正正则过滤表达式，优化结果显示效果，新增分词
-                Chrome浏览器开启自定义，(* 测试)全新匹配算法
-                
+    Branch版本：V4.5    Branch作者：GitHub/leyuwei
+    Branch改进： 去除知乎搜索引擎，增加PMI算法检索
     请选择答题节目: 
       1. 百万英雄    2. 冲顶大会
     """)

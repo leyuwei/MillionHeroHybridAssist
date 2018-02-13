@@ -27,6 +27,7 @@ def baidu_count(keyword, answers, numofquery=10, delword='', timeout=2):
     :param timeout:
     :return:
     """
+    """
     headers = {
         "Host": "zhidao.baidu.com",
         "User-Agent": random.choice(Agents)
@@ -36,7 +37,18 @@ def baidu_count(keyword, answers, numofquery=10, delword='', timeout=2):
         "rn": str(numofquery).encode("gbk"),
         "ie": "gbk".encode("gbk")
     }
-    resp = requests.get("https://zhidao.baidu.com/search", params=params, headers=headers, timeout=timeout)
+    """
+    headers = {
+        "Host": "www.baidu.com",
+        "User-Agent": random.choice(Agents)
+    }
+    params = {
+        "wd": keyword.encode("utf-8"),
+        "rn": "10".encode("utf-8")
+    }
+    resp = requests.get("http://www.baidu.com/s", params=params, headers=headers, timeout=timeout)
+
+    #resp = requests.get("https://zhidao.baidu.com/search", params=params, headers=headers, timeout=timeout)
 
     newanswers = [ans.replace(delword,"") for ans in answers]
 
@@ -49,7 +61,8 @@ def baidu_count(keyword, answers, numofquery=10, delword='', timeout=2):
 
     dr = re.compile(r'<[^>]+>', re.S)
     html = resp.content
-    html_doc = str(html, 'GB18030')
+    #html_doc = str(html, 'utf-8')
+    html_doc = resp.text
     resptext = dr.sub('', html_doc)
     resptext = re.sub(reg, "", resptext)
     resptext = resptext.replace(' ', '')
@@ -110,6 +123,7 @@ class MyParser(HTMLParser):
             dr = re.compile(r'<[^>]+>', re.S)
             t = dr.sub('', data.strip())
             t = t.replace('\n','')
+            t = t.replace('答：', '('+str(self.anscount+1)+')')
             self.anscount += 1
 
             if self.anscount <= self.upperbound:
@@ -120,8 +134,8 @@ class MyParser(HTMLParser):
 
 
 def zhidao_tree(question, answers, timeout=2):
-    allanswers = ','.join(answers)
-    allanswers = allanswers + ' ' + question
+    allanswers = ' OR '.join(answers)
+    allanswers = question + '(' + allanswers + ')'
     headers = {
         "Host": "zhidao.baidu.com",
         "User-Agent": random.choice(Agents)
@@ -147,3 +161,29 @@ def zhidao_tree(question, answers, timeout=2):
     parser.feed(html_doc)
     datastream = parser.re
     return datastream
+
+def baidu_qmi_count(keyword, answers, numofquery=10, delword='', timeout=2):
+    headers = {
+        "Host": "www.baidu.com",
+        "User-Agent": random.choice(Agents)
+    }
+    params = {
+        "wd": keyword.encode("utf-8"),
+        "rn": "10".encode("utf-8")
+    }
+    resp = requests.get("http://www.baidu.com/s", params=params, headers=headers, timeout=timeout)
+
+    if not resp.ok:
+        print("QMI百度搜索出错或超时")
+        return {
+            ans: 0
+            for ans in answers
+        }
+
+    parser = MyParser()
+    html = resp.content
+    html_doc = str(html, 'utf-8')
+    html_doc = re.findall(r'百度为您找到相关结果约([\w,]+?)个', html_doc)
+    html_doc = html_doc[0].replace("，","")
+    html_doc = html_doc.replace(",", "")
+    return int(html_doc.strip())
