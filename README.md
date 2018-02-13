@@ -1,16 +1,17 @@
-# MillionHeroHybridAssist V4.0
-百万英雄、冲顶大会 辅助作答器 使用四引擎混合搜索 准确率超高 慎用、侵删！ 2018/02/12 已更新
+# MillionHeroHybridAssist V4.5
+百万英雄、冲顶大会 辅助作答器 使用四引擎混合搜索 准确率超高 慎用、侵删！ 2018/02/13 已更新
 ====
 ### 致谢
 * 思路来源：作者`smileboywtu` Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link> 已于原作者代码有很大不同<br><br>
 
 ### 最新战绩
+* 2018/02/13 13:00场 11/12 错一题（最后一题，仍在调优新算法），仍通关<br>
 * 2018/02/12 20:00场 全部题目均以高解析百分比通过且正确<br><br>
 
 ### 工具介绍
 本Repo根据其源代码进行了修改和汉化 支持四引擎搜索模式 准确率大幅上升<br>
 新增相似度搜寻算法，优化结果表现！<br>
-![V3.6版本运行截图](https://github.com/leyuwei/MillionHeroHybridAssist/blob/master/demoV4.JPG)<br>
+![V4版本运行截图](https://github.com/leyuwei/MillionHeroHybridAssist/blob/master/demoV4.JPG)<br>
 使用时，请按照原作者`smileboywtu`的Repo说明进行配置，在此不再赘述。<br>
 本Repo大幅提升了相关性能，汉化加强并集成了ADB<br><br>
 
@@ -20,11 +21,15 @@
 
 ### 使用前须知
 * 您在使用时，需要更换config.py中的baiduOCR等秘钥参数（现在的是没法使用的，需要您自行到百度开发者中心去申请OCR的秘钥并替换<link>https://cloud.baidu.com/</link>，具体操作办法百度一下都有）。否则无法使用！<br>
-* 您必须在电脑中安装 Python3.5 或以上版本的环境并安装requirements.txt文件<br>
+* 您必须在电脑中安装 Python3.5 或以上版本的环境~~并安装requirements.txt文件~~(已包括在runfirst.bat里)<br>
 * 同时为了您能够使用正常，请在使用前以~~管理员模式~~正常模式运行runfirst.bat批处理以初始化运行环境<br>
 * 以上三项必须严格执行，否则主程序（main.py）肯定是没办法正常运行的<br><br>
 
 ### 更新日志
+#### ====  已更新 2018/02/13  ====<br>
+* 1、新增PMI关联度算法（每次搜索均有不同，仍在调优）
+* 2、新增可靠度阈值判别（方差>0.71设为答案可信）<br>
+
 #### ====  已更新 2018/02/12  ====<br>
 * 1、新增360搜索
 * 2、新增语音播报 
