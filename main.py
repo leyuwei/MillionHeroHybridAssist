@@ -9,6 +9,7 @@ import multiprocessing
 from multiprocessing import Event
 from multiprocessing import Pipe
 
+import os
 import win32api
 import pythoncom
 from PIL import ImageFilter
@@ -16,11 +17,13 @@ from threading import Thread
 import time
 from argparse import ArgumentParser
 
+import string
 import re
 import operator
 from functools import partial
 from terminaltables import AsciiTable
 import win32com.client
+import numpy as np
 
 from config import api_key
 from config import api_version
@@ -30,12 +33,13 @@ from config import app_secret
 from config import data_directory
 from config import enable_chrome
 from config import image_compress_level
+from core.nn import *
 from config import prefer
 from config import crop_areas
 from config import reg
-from core.Colored import *
 from core.android import analyze_current_screen_text
 from core.android import save_screen
+from core.android import save_record
 from core.Slicer import *
 from core.ios import analyze_current_screen_text_ios
 from core.baiduzhidao import baidu_count
@@ -44,7 +48,6 @@ from core.baiduzhidao import baidu_qmi_count
 from core.bingqa import bing_count
 from core.zhidaoqa import zhidao_count
 from core.soqa import so_count
-from core.check_words import parse_false
 from core.airplayscr import check_exsit
 from core.chrome_search import run_browser
 from core.ocr.baiduocr import get_text_from_image as bai_get_text
@@ -52,9 +55,9 @@ from core.ocr.spaceocr import get_text_from_image as ocrspace_get_text
 
 global isNegativeQuestion
 global origQuestion
+global test_key
 isNegativeQuestion = False
 origQuestion = ""
-con = printcon()
 
 if prefer[0] == "baidu":
     get_text_from_image = partial(bai_get_text,
@@ -94,8 +97,16 @@ def parse_question_and_answer(text_list):
         elif keyword.endswith("。"):
             start = i + 1
             break
-    real_question = question.split(".")[-1] #去除题号的点
+
+    # V4.7修正 如果OCR识别结果是英文字符那么不应以中文的.为切分依据
+    if question.find('.') >= 0:
+        real_question = question.split(".")[-1]
+    elif question.find('．') >= 0:
+        real_question = question.split("．")[-1]
+    else:
+        real_question = question.lstrip(string.digits)
     origQuestion = real_question
+
     # 新增题目模式识别
     global isNegativeQuestion
     isNegativeQuestion = False
@@ -103,19 +114,26 @@ def parse_question_and_answer(text_list):
         real_question_judge = real_question.split(',')[-1]
     else:
         real_question_judge = real_question.split('，')[-1]
-    if real_question_judge.find('没有')>=0 or real_question_judge.find('未')>=0 or real_question_judge.find('不')>=0 or real_question_judge.find('是错')>=0:
-        isNegativeQuestion = True
-        real_question = real_question.replace('没有','有')
-        real_question = real_question.replace('未', '')
-        real_question = real_question.replace('还未', '已')
-        real_question = real_question.replace('不', '')
-        real_question = real_question.replace('是错', '是对')
-    question, true_flag = parse_false(real_question)
+
+    critical_word_list = [('没有','有'),('未', ''),('没在', '在'),('没出', '出'),('还未', '已'),('不', ''),('是错', '是对')]
+    not_critical_word_list = ['不只','不单','不止']
+    isNegative = True
+    for critical_word,new_word in critical_word_list:
+        if real_question_judge.find(critical_word)>=0:
+            for not_critical_word in not_critical_word_list:
+                if real_question_judge.find(not_critical_word)>=0:
+                    isNegative = False
+                    break
+            if isNegative == True:
+                isNegativeQuestion = True
+                real_question = real_question.replace(critical_word, new_word)
+    question =real_question # 遗留问题：懒得改了 直接传值
+
     # 增加识别异常符号处理
     for ii in range(start,len(text_list)):
         text_list[ii] = re.sub(reg, "", text_list[ii])
         text_list[ii] = text_list[ii].lower()
-    return true_flag, real_question, question, text_list[start:]
+    return isNegativeQuestion, real_question, question, text_list[start:]
 
 def pre_process_question(keyword):
     """
@@ -125,7 +143,11 @@ def pre_process_question(keyword):
     """
     for char, repl in [("“", ""), ("”", ""), ("？", "")]:
         keyword = keyword.replace(char, repl)
-    keyword = keyword.split(r"．")[-1]
+    # V4.7修正 如果OCR识别结果是英文字符那么不应以中文的.为切分依据
+    if keyword.find('.')>=0:
+        keyword = keyword.split(".")[-1]
+    else:
+        keyword = keyword.split(r"．")[-1]
     keywords = keyword.split(" ")
     keyword = "".join([e.strip("\r\n") for e in keywords if e])
     return keyword
@@ -155,7 +177,7 @@ class SearchThread(Thread):
         elif self.engine == 'speaker':
             speakword(self.answer)
         else:
-            self.result = zhihu_count(self.question, self.answer,delword=self.delword, timeout=self.timeout)
+            self.result = zhidao_count(self.question, self.answer,delword=self.delword, timeout=self.timeout)
     def get_result(self):
         return self.result
 
@@ -213,26 +235,29 @@ def main():
     def __inner_job():
         global isNegativeQuestion,origQuestion
         start = time.time()
-        if game_platform==2:
-            text_binary = analyze_current_screen_text(
-                directory=data_directory,
-                compress_level=image_compress_level[0],
-                crop_area = crop_areas[game_type]
+        if game_platform!=3:
+            if game_platform==2:
+                text_binary = analyze_current_screen_text(
+                    directory=data_directory,
+                    compress_level=image_compress_level[0],
+                    crop_area = crop_areas[game_type]
+                )
+            else:
+                text_binary = analyze_current_screen_text_ios(
+                    directory=data_directory,
+                    compress_level=image_compress_level[0],
+                    crop_area=crop_areas[game_type]
+                )
+            keywords = get_text_from_image(
+                image_data=text_binary,
             )
+            if not keywords:
+                print("本题不能识别，请尽快自行作答！")
+                return
+            true_flag, real_question, question, answers = parse_question_and_answer(keywords)
         else:
-            text_binary = analyze_current_screen_text_ios(
-                directory=data_directory,
-                compress_level=image_compress_level[0],
-                crop_area=crop_areas[game_type]
-            )
-        keywords = get_text_from_image(
-            image_data=text_binary,
-        )
-        if not keywords:
-            print("本题不能识别，请尽快自行作答！")
-            return
+            true_flag, real_question, question, answers = parse_question_and_answer(test_key)
 
-        true_flag, real_question, question, answers = parse_question_and_answer(keywords)
         orig_answer = answers
         # 分词预处理
         allanswers = ''
@@ -263,14 +288,15 @@ def main():
             noticer.set()
 
         search_question = pre_process_question(question)
-        search_question_1 = search_question + " " + answers[0].replace(delword,"")
-        search_question_2 = search_question + " " + answers[1].replace(delword,"")
-        search_question_3 = search_question + " " + answers[2].replace(delword,"")
         thd1 = SearchThread(search_question, answers, timeout, delword, 'baidu')
         thd2 = SearchThread(search_question, answers, timeout, delword, 'bing')
         thd3 = SearchThread(search_question, answers, timeout, delword, 'zhidao')
         thd7 = SearchThread(search_question, answers, timeout, delword, 'so')
         if isNewAlgUsable:
+            # V4.7 修正OCR识别不全导致无法继续检索的问题。 Thanks To Github/Misakio （数组越界）
+            search_question_1 = search_question + " " + answers[0].replace(delword, "")
+            search_question_2 = search_question + " " + answers[1].replace(delword, "")
+            search_question_3 = search_question + " " + answers[2].replace(delword, "")
             thd4 = SearchThread(search_question_1, answers, timeout, delword, 'baidu', numofquery=10)
             thd5 = SearchThread(search_question_2, answers, timeout, delword, 'baidu', numofquery=10)
             thd6 = SearchThread(search_question_3, answers, timeout, delword, 'baidu', numofquery=10)
@@ -372,18 +398,28 @@ def main():
             A2_qmi = (num_QA2) / (num_Q * num_A2)
             A3_qmi = (num_QA3) / (num_Q * num_A3)
             qmi_max = max(A1_qmi,A2_qmi,A3_qmi)
-            #print(A1_qmi,A2_qmi,A3_qmi)
-            # * (summary4[orig_answer[0]] )
-            a = (summary_t[orig_answer[0]]*10+1) * ((summary5[orig_answer[0]] + summary6[orig_answer[0]]) +1 )
-            b = (summary_t[orig_answer[1]]*10+1) * ((summary4[orig_answer[1]] + summary6[orig_answer[1]]) +1 )
-            c = (summary_t[orig_answer[2]]*10+1) * ((summary4[orig_answer[2]] + summary5[orig_answer[2]]) +1 )
+
+            # 配置模型控制参数
+            if isNegativeQuestion:
+                weight1 = 1
+                adding1 = 10
+                weight2 = 1
+                adding2 = 10
+            else:
+                weight1 = 20
+                adding1 = 10
+                weight2 = 1
+                adding2 = 10
+            a = (summary_t[orig_answer[0]]*weight1+adding1) * (((summary5[orig_answer[0]] + summary6[orig_answer[0]]))*weight2 +adding2 )
+            b = (summary_t[orig_answer[1]]*weight1+adding1) * (((summary4[orig_answer[1]] + summary6[orig_answer[1]]))*weight2 +adding2 )
+            c = (summary_t[orig_answer[2]]*weight1+adding1) * (((summary4[orig_answer[2]] + summary5[orig_answer[2]]))*weight2 +adding2 )
+
             similar_max = max(a, b, c)
             # 以下判断没有严格的理论基础，暂时不开启
             if isNegativeQuestion and creditFlag==False and False:
                 a = similar_max - a + 1
                 b = similar_max - b + 1
                 c = similar_max - c + 1
-            #print(a,b,c)
             a = float("%.6f" % ((a/(similar_max))*(A1_qmi/(qmi_max))))
             b = float("%.6f" % ((b/(similar_max))*(A2_qmi/(qmi_max))))
             c = float("%.6f" % ((c/(similar_max))*(A3_qmi/(qmi_max))))
@@ -416,30 +452,48 @@ def main():
         print("*" * 40)
         print("")
         if creditFlag == False:
-            print("     ！！！ 本题预测结果不是很可靠，请慎重  ！！！")
+            print("     ！【  本题预测结果不是很可靠，请慎重  】 ！")
         if isNegativeQuestion==True:
-            print("     --- 本题是否定提法，程序已帮您优化结果！ ---")
-        if true_flag:
+            print("     ！【 本题是否定提法，已帮您优化结果！ 】 ！")
+        if isNewAlgUsable==False:
             print("      √ 混合算法建议 ： ", summary_li[0][0],' (第',orig_answer.index(summary_li[0][0])+1,'项)')
-        else:
-            print("      √ 混合算法建议 ： ", summary_li[0][0])
 
         # 测试：新匹配算法
+        if isNegativeQuestion == True:
+            ngflg = '1'
+        else:
+            ngflg = '0'
         if isNewAlgUsable:
             if isNegativeQuestion == False:
                 summary_li2 = sorted(summary_newalg.items(), key=operator.itemgetter(1), reverse=True) #True
             else:
                 summary_li2 = sorted(summary_newalg.items(), key=operator.itemgetter(1), reverse=False) #False
-            print("      √ 关联算法建议 ：  ", summary_li2[0][0],' (第',orig_answer.index(summary_li2[0][0])+1,'项)')
-            if orig_answer.index(summary_li2[0][0]) == orig_answer.index(summary_li[0][0]) and creditFlag==True:
-                print("      √ 【 双算法解答一致，选择 第",orig_answer.index(summary_li[0][0])+1,"项 答案 ！】")
+            print("      √ 关联算法建议  ：  ", summary_li2[0][0],'   (第',orig_answer.index(summary_li2[0][0])+1,'项)')
+
+            # 神经网络计算，采用预训练参数
+            feature = np.array(
+                [int(summary_t[orig_answer[0]]), int(summary_t[orig_answer[1]]), int(summary_t[orig_answer[2]]),
+                 int(summary4[orig_answer[0]]), int(summary4[orig_answer[1]]), int(summary4[orig_answer[2]]),
+                 int(summary5[orig_answer[0]]), int(summary5[orig_answer[1]]), int(summary5[orig_answer[2]]),
+                 int(summary6[orig_answer[0]]), int(summary6[orig_answer[1]]), int(summary6[orig_answer[2]]),
+                 float('%.5f' % (A1_qmi / qmi_max)), float('%.5f' % (A2_qmi / qmi_max)),
+                 float('%.5f' % (A3_qmi / qmi_max))])
+            feature = np.matrix(feature)
+            nn_re = predict(feature, get_theta1(isNegativeQuestion), get_theta2(isNegativeQuestion))
+            nn_re = nn_re[0]
+            #print(nn_re)
+            nn_re = nn_re.index(max(nn_re))
+            print('      √ 神经网络输出  ：  ', orig_answer[nn_re], '   (第', str(nn_re + 1), '项)')
+
+            if orig_answer.index(summary_li2[0][0]) == nn_re and creditFlag==True:
+                print("      √ 【 结果可信度高 ，选择  第",orig_answer.index(summary_li[0][0])+1,"项 ！】")
                 speak("第{}项{}".format(orig_answer.index(summary_li[0][0])+1,summary_li[0][0]))
                 print("      ×   排除选项  ：  ", summary_li2[-1][0])
             elif creditFlag==False:
                 speak("谨慎第{}项谨慎".format(orig_answer.index(summary_li2[0][0]) + 1))
                 print("      ×   排除选项  ：  ", summary_li2[-1][0])
             else:
-                speak("谨慎第{}项谨慎".format(orig_answer.index(summary_li2[0][0]) + 1))
+                speak("谨慎第{}项谨慎".format(nn_re + 1))
                 print("      ×   排除选项  ：  ", summary_li[-1][0])
         else:
             speak("谨慎第{}项谨慎".format(orig_answer.index(summary_li[0][0])+1))
@@ -447,27 +501,46 @@ def main():
             print("      ×   排除选项  ：  ", summary_li[-1][0])
 
 
-        # 输出知识树
-        thdtree = SearchThread(search_question, answers, timeout, delword, 'zhidaotree')
-        thdtree.setDaemon(True)
-        thdtree.start()
-        thdtree.join()
-        summary_tree = thdtree.get_result()
-        print("")
-        print("")
-        print("辅助知识树")
-        print("*" * 40)
-        for ans in summary_tree:
-            print(ans)
+        if game_platform==3:
+            print('')
+            print(orig_answer)
+            real_answer = input("请输入本题正确答案：")
+            with open('testset_record_feature.txt', 'a+') as f:
+                featurestr = str(summary_t[orig_answer[0]]) + '|' + str(summary_t[orig_answer[1]]) + '|' + str(summary_t[orig_answer[2]])
+                featurestr += '|' + str(summary4[orig_answer[0]]) + '|' + str(summary4[orig_answer[1]]) + '|' + str(summary4[orig_answer[2]])
+                featurestr += '|' + str(summary5[orig_answer[0]]) + '|' + str(summary5[orig_answer[1]]) + '|' + str(summary5[orig_answer[2]])
+                featurestr += '|' + str(summary6[orig_answer[0]]) + '|' + str(summary6[orig_answer[1]]) + '|' + str(summary6[orig_answer[2]])
+                featurestr += '|' + ('%.5f' % (A1_qmi/qmi_max)) + '|' + ('%.5f' % (A2_qmi/qmi_max)) + '|' + ('%.5f' % (A3_qmi/qmi_max)) + '|' + ngflg + '|' + real_answer + '\n'
+                f.write(featurestr)
 
-        save_screen(
-            directory=data_directory
-        )
+        if game_platform != 3 :
+            # 输出知识树
+            thdtree = SearchThread(search_question, answers, timeout, delword, 'zhidaotree')
+            thdtree.setDaemon(True)
+            thdtree.start()
+            thdtree.join()
+            summary_tree = thdtree.get_result()
+            print("")
+            print("")
+            print("辅助知识树")
+            print("*" * 40)
+            for ans in summary_tree:
+                print(ans)
+
+            save_screen(
+                directory=data_directory
+            )
+            save_record(
+                origQuestion,
+                orig_answer
+            )
 
     print("""
     原作者：GitHub/smileboywtu forked since 2018.01.10
-    Branch版本：V4.5    Branch作者：GitHub/leyuwei
-    Branch改进： 去除知乎搜索引擎，增加PMI算法检索
+    Branch版本：V5.0    Branch作者：GitHub/leyuwei
+    Branch改进： 修正OCR识别不全时导致题目检索无法继续的问题，
+                进一步修正整合模型，针对题目中含“没”字情况进行优化
+                新增神经网络算法，采用预训练参数进行计算
     请选择答题节目: 
       1. 百万英雄    2. 冲顶大会
     """)
@@ -487,6 +560,7 @@ def main():
     请选择您的设备平台：
             1. iOS
             2. Android
+            3. 测试集特征添加（仅供开发者用）
     """)
 
     game_platform = input("输入平台编号: ")
@@ -499,24 +573,44 @@ def main():
             print("投屏软件已经启动。")
     elif game_platform == "2":
         game_platform = 2
+    elif game_platform == "3":
+        game_platform = 3
     else:
         game_platform = 1
 
+    os.system("cls")  # Windows清屏
+
     while True:
         print("""
-    -----------------------------
+------------------------------------
     请在答题开始前运行程序，
     答题开始的时候按Enter预测答案
+------------------------------------    
                 """)
 
-        enter = input("按Enter键开始，按ESC键退出...")
-        if enter == chr(27):
-            break
-        try:
-            __inner_job()
-        except Exception as e:
-            print("截图分析过程中出现故障，请确认设备是否连接正确（投屏正常），网络是否通畅！")
-            speak("出现问题！")
+        if game_platform!=3:
+            enter = input("按Enter键开始，按ESC键退出...")
+            if enter == chr(27):
+                break
+            os.system("cls")  # Windows清屏
+            try:
+                __inner_job()
+            except Exception as e:
+                print("截图分析过程中出现故障，请确认设备是否连接正确（投屏正常），网络是否通畅！")
+                speak("出现问题！")
+        else:
+            if os.path.exists('testset_record.txt'):
+                with open('testset_record.txt', 'r') as f:
+                    reclist = f.readlines()
+                    for rec in reclist:
+                        recitem = rec.split('|')
+                        test_key = recitem[0:4]
+                        test_key[0] = '1.'+test_key[0]
+                        try:
+                            __inner_job()
+                        except Exception as e:
+                            print("添加特征值过程中出现故障。")
+                break
 
     if enable_chrome:
         reader.close()

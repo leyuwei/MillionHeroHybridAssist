@@ -9,6 +9,7 @@
 from datetime import datetime
 
 import os
+import hashlib
 from PIL import Image
 from PIL import ImageFilter
 from shutil import copyfile
@@ -48,6 +49,27 @@ def capture_screen(filename="screenshot.png", directory="."):
     os.system("adb shell screencap -p /sdcard/{0}".format(filename))
     os.system("adb pull /sdcard/{0} {1}".format(filename, os.path.join(directory, filename)))
 
+
+def save_record(question,answers):
+    md5str = hashlib.md5(question.encode('utf-8')).hexdigest()
+    isRepeatRecord = False
+    if os.path.exists('testset_record.txt') == True:
+        with open('testset_record.txt', 'r') as f:
+            record_list = f.readlines()
+            if len(record_list)>0:
+                for rec in record_list:
+                    if len(rec)>1:
+                        md5_item = rec.split('|')[-1]
+                        md5_item = md5_item.strip().replace('\n','')
+                        if md5_item==md5str:
+                            isRepeatRecord = True
+    if isRepeatRecord == False:
+        with open('testset_record.txt', 'a+') as f:
+            content = question
+            for ans in answers:
+                content += ('|'+ans)
+            content += ('|' + md5str)
+            f.write(content+'\n')
 
 def save_screen(filename="screenshot.png", directory="."):
     """
