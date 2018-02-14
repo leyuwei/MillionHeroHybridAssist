@@ -401,13 +401,13 @@ def main():
 
             # 配置模型控制参数
             if isNegativeQuestion:
-                weight1 = 1
-                adding1 = 10
+                weight1 = 10
+                adding1 = 1
                 weight2 = 1
                 adding2 = 10
             else:
-                weight1 = 20
-                adding1 = 10
+                weight1 = 10
+                adding1 = 1
                 weight2 = 1
                 adding2 = 10
             a = (summary_t[orig_answer[0]]*weight1+adding1) * (((summary5[orig_answer[0]] + summary6[orig_answer[0]]))*weight2 +adding2 )
