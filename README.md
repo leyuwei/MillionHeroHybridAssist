@@ -1,6 +1,9 @@
 # MillionHeroHybridAssist V5.0
 百万英雄、冲顶大会 辅助作答器 使用四引擎+神经网络算法 准确率超高 慎用、侵删！ 2018/02/15 已更新
 ====
+### 新版本提请注意
+请更新requirements.txt文件（重新跑一次runfirst.bat），否则无法正常使用。西瓜百万英雄第一季已结束，<b>祝新年快乐~</b>年后再见<br><br>
+
 ### 致谢
 * 思路来源：作者`smileboywtu` Repo链接：<link>https://github.com/smileboywtu/MillionHeroAssistant</link> 已于原作者代码有很大不同<br><br>
 
