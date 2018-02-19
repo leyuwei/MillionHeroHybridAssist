@@ -14,13 +14,14 @@ api_version = (0, 1)
 ## 最终裁剪区域可表示为 (image_width * left, image_height * top, image_width * right, image_height * bottom)
 crop_areas = {
     '百万英雄': (55/1080, 300/1920, 1025/1080, 1260/1920),
-    '冲顶大会': (40/750, 170/1334, 710/750, 865/1334)
+    '冲顶大会': (40/750, 170/1334, 710/750, 865/1334),
+    '知乎答题': (0, 318/1334, 1, 1040/1334)
 }
 
 ### baidu orc
-app_id = "10695132"
-app_key = "KgQjLQVBV789sER4FVraG8wO"
-app_secret = "GAnOzFPHpV25738EW5C2kIGGSRGniM"
+app_id = "10686232"
+app_key = "KgQjLQVBVTAsBHd12VraG8wO"
+app_secret = "GAnOzFPHpV2573bx4pfZGFkIGGSRGniM"
 
 ### ocr.space
 api_key = "6c851da45688957"
@@ -34,3 +35,6 @@ enable_chrome = True
 
 ### Regex Pattern
 reg = "[\s+\.\!\/_,《》√✔×✘↘→↗↑↖←↙↓\“\”·$%^*(+\’\‘\']+|[+——！，。？、~@#￥%……&*（）]+|-"
+
+### Developer Mode Switch
+isDebug = False

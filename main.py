@@ -56,6 +56,7 @@ from core.ocr.spaceocr import get_text_from_image as ocrspace_get_text
 global isNegativeQuestion
 global origQuestion
 global test_key
+isExceptionGame = False
 isNegativeQuestion = False
 origQuestion = ""
 
@@ -64,7 +65,7 @@ if prefer[0] == "baidu":
                                   app_id=app_id,
                                   app_key=app_key,
                                   app_secret=app_secret,
-                                  api_version=api_version,
+                                  api_version=api_version[1],
                                   timeout=5)
 elif prefer[0] == "ocrspace":
     get_test_from_image = partial(ocrspace_get_text, api_key=api_key)
@@ -80,7 +81,7 @@ def parse_args():
     return parser.parse_args()
 
 def parse_question_and_answer(text_list):
-    global origQuestion
+    global origQuestion,isExceptionGame
     question = ""
     start = 0
     for i, keyword in enumerate(text_list):
@@ -104,7 +105,10 @@ def parse_question_and_answer(text_list):
     elif question.find('．') >= 0:
         real_question = question.split("．")[-1]
     else:
-        real_question = question.lstrip(string.digits)
+        if isExceptionGame==False:
+            real_question = question.lstrip(string.digits)
+        else:
+            real_question = question
     origQuestion = real_question
 
     # 新增题目模式识别
@@ -116,7 +120,7 @@ def parse_question_and_answer(text_list):
         real_question_judge = real_question.split('，')[-1]
 
     critical_word_list = [('没有','有'),('未', ''),('没在', '在'),('没出', '出'),('还未', '已'),('不', ''),('是错', '是对')]
-    not_critical_word_list = ['不只','不单','不止']
+    not_critical_word_list = ['不只','不单','不止','不入','不齿','不耻']
     isNegative = True
     for critical_word,new_word in critical_word_list:
         if real_question_judge.find(critical_word)>=0:
@@ -204,13 +208,15 @@ def var(num):
     return v/(avg+1)
 
 def main():
+    global isExceptionGame
     args = parse_args()
     timeout = args.timeout
 
-    speak("欢迎使用答题辅助器！")
+    speak("欢迎使用答题辅助器")
     print(""" 
     请先选择您是否需要开启Chrome浏览器辅助
     它可以帮助您展示更多信息，但是也会降低结果匹配效率
+    【注意：若您使用可执行文件exe版本，这里请勿开启Chrome，否则报错】
     输入  1-开启    2-不开启
     """)
     chrome_sw = input("请输入数字: ")
@@ -233,8 +239,12 @@ def main():
         browser_daemon.start()
 
     def __inner_job():
-        global isNegativeQuestion,origQuestion
+        global isNegativeQuestion,origQuestion,isExceptionGame
         start = time.time()
+        cur_path = os.path.abspath(os.curdir)
+        path = cur_path + "\\screenshots"
+        if not os.path.exists(path):
+            os.makedirs(path)
         if game_platform!=3:
             if game_platform==2:
                 text_binary = analyze_current_screen_text(
@@ -263,19 +273,28 @@ def main():
         allanswers = ''
         optioncount = 0
         isNewAlgUsable = False
+        isAnswerAllNum = False
         for i in answers:
             allanswers = allanswers + i
             optioncount += 1
-        repeatanswers = get_repeat_num_seq(allanswers)
+            if i.isdigit():
+                isAnswerAllNum = True
+        if isAnswerAllNum == False:
+            repeatanswers = get_repeat_num_seq(allanswers)
+        else:
+            repeatanswers = [['',0]]
         maxlen = 0
         delword = '' # 预分词目标：找到选项中的重复部分，提升选项之间的差异性
         if optioncount>=3:
             isNewAlgUsable = True
         if isNewAlgUsable:
-            for (d,x) in repeatanswers:
-                if x>=3 and len(d)>maxlen:
-                    maxlen = len(d)
-                    delword = d
+            if isAnswerAllNum == False:
+                for (d,x) in repeatanswers:
+                    if x>=3 and len(d)>maxlen:
+                        maxlen = len(d)
+                        delword = d
+            else:
+                delword = ''
 
         print("")
         print("*" * 40)
@@ -542,15 +561,21 @@ def main():
                 进一步修正整合模型，针对题目中含“没”字情况进行优化
                 新增神经网络算法，采用预训练参数进行计算
     请选择答题节目: 
-      1. 百万英雄    2. 冲顶大会
+      1. 百万英雄    2. 冲顶大会    3. 知乎答题
     """)
     game_type = input("输入游戏编号: ")
     if game_type == "1":
         game_type = '百万英雄'
+        isExceptionGame = False
     elif game_type == "2":
         game_type = '冲顶大会'
+        isExceptionGame = False
+    elif game_type == "3":
+        game_type = '知乎答题'
+        isExceptionGame = True
     else:
         game_type = '百万英雄'
+        isExceptionGame = False
 
     print("""
     操作平台的一些说明：如果您是iOS，则必须使用您的电脑创建WiFi热点并将您的iOS设备连接到该热点，
