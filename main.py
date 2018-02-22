@@ -98,6 +98,15 @@ def parse_question_and_answer(text_list):
         elif keyword.endswith("。"):
             start = i + 1
             break
+        elif keyword.endswith("_"): # 新增问题里填空下划线的切分判断
+            start = i + 1
+            break
+        elif keyword.endswith("是") and isExceptionGame==True: # 仅当知乎模式开启时以“是”字作为题目切分依据
+            start = i + 1
+            break
+        elif keyword.endswith("为") and isExceptionGame == True:  # 仅当知乎模式开启时以“为”字作为题目切分依据
+            start = i + 1
+            break
 
     # V4.7修正 如果OCR识别结果是英文字符那么不应以中文的.为切分依据
     if question.find('.') >= 0:
@@ -120,7 +129,7 @@ def parse_question_and_answer(text_list):
         real_question_judge = real_question.split('，')[-1]
 
     critical_word_list = [('没有','有'),('未', ''),('没在', '在'),('没出', '出'),('还未', '已'),('不', ''),('是错', '是对')]
-    not_critical_word_list = ['不只','不单','不止','不入','不齿','不耻']
+    not_critical_word_list = ['不只','不单','不止','不入','不齿','不耻','不拔','不值']
     isNegative = True
     for critical_word,new_word in critical_word_list:
         if real_question_judge.find(critical_word)>=0:
@@ -555,11 +564,7 @@ def main():
             )
 
     print("""
-    原作者：GitHub/smileboywtu forked since 2018.01.10
-    Branch版本：V5.0    Branch作者：GitHub/leyuwei
-    Branch改进： 修正OCR识别不全时导致题目检索无法继续的问题，
-                进一步修正整合模型，针对题目中含“没”字情况进行优化
-                新增神经网络算法，采用预训练参数进行计算
+    Branch版本：V5.1    Branch作者：GitHub/leyuwei
     请选择答题节目: 
       1. 百万英雄    2. 冲顶大会    3. 知乎答题
     """)
