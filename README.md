@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.org/lbryio/lbry.svg?branch=master)](https://travis-ci.org/leyuwei/MillionHeroHybridAssist)
-[![Coverage Status](https://coveralls.io/repos/github/lbryio/lbry/badge.svg)](https://coveralls.io/github/leyuwei/MillionHeroHybridAssist)
-
 # MillionHeroHybridAssist V5.1
 百万英雄、冲顶大会、知乎竞答 辅助作答器 使用四引擎+神经网络模型 准确率超高 慎用、侵删！ 2018/02/22 已更新
 ====
