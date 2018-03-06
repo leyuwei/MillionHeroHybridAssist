@@ -1,1 +1,4 @@
 language: python
+os: windows
+rvm:
+ - 3.6
